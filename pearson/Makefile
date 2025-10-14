@@ -1,12 +1,13 @@
 # Author: David Holmqvist <daae19@student.bth.se>
 
+
 CXX=g++-13
-CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -Ofast
+CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused
 
-all: pearson_opt verify
+all: pearson verify
 
-pearson_opt: vector dataset analysis pearson.cpp
-	$(CXX) $(CXXFLAGS) pearson.cpp vector.o dataset.o analysis.o -o pearson_opt
+pearson: vector dataset analysis pearson.cpp 
+	$(CXX) $(CXXFLAGS) pearson.cpp vector.o dataset.o analysis.o -o pearson
 
 analysis: vector analysis.hpp analysis.cpp
 	$(CXX) $(CXXFLAGS) -c analysis.cpp -o analysis.o
@@ -21,4 +22,4 @@ verify: verify.c
 	$(CC) verify.c -o verify
 
 clean:
-	rm -rf verify pearson_opt *.o *.dSYM 2> /dev/null
+	rm -rf verify pearson *.o *.dSYM 2> /dev/null

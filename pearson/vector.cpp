@@ -79,29 +79,31 @@ double Vector::magnitude() const
     return std::sqrt(dot_prod);
 }
 
-Vector& Vector::operator/(double div)
+Vector Vector::operator/(double div)
 {
+    auto result{*this};
 
     for (auto i{0}; i < size; i++)
     {
-        data[i] /= div;
+        result[i] /= div;
     }
 
-    return *this;
+    return result;
 }
 
-Vector& Vector::operator-(double sub)
+Vector Vector::operator-(double sub)
 {
+    auto result{*this};
 
     for (auto i{0}; i < size; i++)
     {
-        data[i] -= sub;
+        result[i] -= sub;
     }
 
-    return *this;
+    return result;
 }
 
-double Vector::dot(const Vector& rhs) const
+double Vector::dot(Vector rhs) const
 {
     double result{0};
 
