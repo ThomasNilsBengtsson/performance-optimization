@@ -27,11 +27,14 @@ namespace Filter
         Matrix scratch{PPM::max_dimension};
         auto dst{m};
 
+        //Added these two for branch prediction
         auto x_size = dst.get_x_size();
         auto y_size = dst.get_y_size();
 
+        //Moved this block, so it is not in the for loop
         double w[Gauss::max_radius]{};
-        Gauss::get_weights(radius, w); //Flyttat denna
+        Gauss::get_weights(radius, w);
+
         for (auto x{0}; x < x_size; x++)
         {
             for (auto y{0}; y < y_size; y++)
@@ -48,7 +51,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto x2{x - wi};
-                    if (__builtin_expect(x2 >= 0, 1))
+                    if (__builtin_expect(x2 >= 0, 1)) //Added branch prediction for each if statement
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -74,7 +77,8 @@ namespace Filter
         {
             for (auto y{0}; y < y_size; y++)
             {
-                /* Den kallar get weights andra gången här vilket inte behövs
+                /* 
+                Commented/removed this block because we already get the weight from above. (line 34, 35)
                 double w[Gauss::max_radius]{};
                 Gauss::get_weights(radius, w);
                 */

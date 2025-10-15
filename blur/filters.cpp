@@ -27,15 +27,12 @@ namespace Filter
         Matrix scratch{PPM::max_dimension};
         auto dst{m};
 
-        auto x_size = dst.get_x_size();
-        auto y_size = dst.get_y_size();
-
-        double w[Gauss::max_radius]{};
-        Gauss::get_weights(radius, w); //Flyttat denna
-        for (auto x{0}; x < x_size; x++)
+        for (auto x{0}; x < dst.get_x_size(); x++)
         {
-            for (auto y{0}; y < y_size; y++)
+            for (auto y{0}; y < dst.get_y_size(); y++)
             {
+                double w[Gauss::max_radius]{};
+                Gauss::get_weights(radius, w);
 
                 // unsigned char Matrix::r(unsigned x, unsigned y) const
                 // {
@@ -48,7 +45,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto x2{x - wi};
-                    if (__builtin_expect(x2 >= 0, 1))
+                    if (x2 >= 0, 1)
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -56,7 +53,7 @@ namespace Filter
                         n += wc;
                     }
                     x2 = x + wi;
-                    if (__builtin_expect(x2 < x_size, 1))
+                    if (x2 < dst.get_x_size())
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -70,14 +67,12 @@ namespace Filter
             }
         }
 
-        for (auto x{0}; x < x_size; x++)
+        for (auto x{0}; x < dst.get_x_size(); x++)
         {
-            for (auto y{0}; y < y_size; y++)
+            for (auto y{0}; y < dst.get_y_size(); y++)
             {
-                /* Den kallar get weights andra gången här vilket inte behövs
                 double w[Gauss::max_radius]{};
                 Gauss::get_weights(radius, w);
-                */
 
                 auto r{w[0] * scratch.r(x, y)}, g{w[0] * scratch.g(x, y)}, b{w[0] * scratch.b(x, y)}, n{w[0]};
 
@@ -85,7 +80,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto y2{y - wi};
-                    if (__builtin_expect(y2 >= 0, 1))
+                    if (y2 >= 0, 1)
                     {
                         r += wc * scratch.r(x, y2);
                         g += wc * scratch.g(x, y2);
@@ -93,7 +88,7 @@ namespace Filter
                         n += wc;
                     }
                     y2 = y + wi;
-                    if (__builtin_expect(y2 < y_size, 1))
+                    if (y2 < dst.get_y_size(), 1)
                     {
                         r += wc * scratch.r(x, y2);
                         g += wc * scratch.g(x, y2);
