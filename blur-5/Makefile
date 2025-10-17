@@ -1,7 +1,7 @@
 # Author: David Holmqvist <daae19@student.bth.se>
 
-CXX=g++
-CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -O3 -mavx2 #-funroll-loops -fopt-info-loop-optimized #-fopt-info-vec-all
+CXX=g++-13
+CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -O3 -march=native -fopenmp #-funroll-loops -fopt-info-loop-optimized #-fopt-info-vec-all
 
 all: blur_opt
 

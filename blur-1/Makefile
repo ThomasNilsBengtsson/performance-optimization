@@ -1,12 +1,12 @@
 # Author: David Holmqvist <daae19@student.bth.se>
 
 CXX=g++
-CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -O3 #Added a flag for 1
+CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -O3
 
-all: blur
+all: blur_opt
 
 blur_opt: matrix ppm filters blur.cpp
-	$(CXX) $(CXXFLAGS) blur.cpp matrix.o ppm.o filters.o -o blur
+	$(CXX) $(CXXFLAGS) blur.cpp matrix.o ppm.o filters.o -o blur_opt
 
 filters: matrix filters.hpp filters.cpp
 	$(CXX) $(CXXFLAGS) -c filters.cpp -o filters.o
@@ -18,4 +18,4 @@ ppm: ppm.hpp ppm.cpp
 	$(CXX) $(CXXFLAGS) -c ppm.cpp -o ppm.o
 
 clean:
-	rm -rf blur *.ppm *.o *.dSYM 2> /dev/null
+	rm -rf blur_opt *.ppm *.o *.dSYM 2> /dev/null

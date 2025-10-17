@@ -1,0 +1,26 @@
+// Horizontal blur pass
+for (auto y{0}; y < y_size; y++)
+{
+    for (auto x{0}; x < x_size; x++)
+    {
+        double r = 0.0, g = 0.0, b = 0.0, n = 0.0;
+        
+        for (auto wi{-radius}; wi <= radius; wi++)
+        {
+            // Clamp x2 to valid range instead of conditional
+            auto x2 = x + wi;
+            if (x2 < 0) x2 = 0;
+            if (x2 >= x_size) x2 = x_size - 1;
+            
+            auto wc = w[abs(wi)];
+            r += wc * dst.r(x2, y);
+            g += wc * dst.g(x2, y);
+            b += wc * dst.b(x2, y);
+            n += wc;
+        }
+        
+        scratch.r(x, y) = r / n;
+        scratch.g(x, y) = g / n;
+        scratch.b(x, y) = b / n;
+    }
+}

@@ -26,11 +26,10 @@ namespace Filter
     {
         Matrix scratch{PPM::max_dimension};
         auto dst{m};
-        
-        //Moved this block, so it is not in the for loop
+
+        // Moved this up
         double w[Gauss::max_radius]{};
         Gauss::get_weights(radius, w);
-
 
         for (auto x{0}; x < dst.get_x_size(); x++)
         {
@@ -48,7 +47,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto x2{x - wi};
-                    if (x2 >= 0, 1)
+                    if (x2 >= 0)
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -83,7 +82,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto y2{y - wi};
-                    if (y2 >= 0, 1)
+                    if (y2 >= 0)
                     {
                         r += wc * scratch.r(x, y2);
                         g += wc * scratch.g(x, y2);
@@ -91,7 +90,7 @@ namespace Filter
                         n += wc;
                     }
                     y2 = y + wi;
-                    if (y2 < dst.get_y_size(), 1)
+                    if (y2 < dst.get_y_size())
                     {
                         r += wc * scratch.r(x, y2);
                         g += wc * scratch.g(x, y2);

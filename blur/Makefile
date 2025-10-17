@@ -5,7 +5,7 @@ CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused
 
 all: blur
 
-blur_opt: matrix ppm filters blur.cpp
+blur: matrix ppm filters blur.cpp
 	$(CXX) $(CXXFLAGS) blur.cpp matrix.o ppm.o filters.o -o blur
 
 filters: matrix filters.hpp filters.cpp

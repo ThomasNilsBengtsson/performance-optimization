@@ -1,7 +1,7 @@
 # Author: David Holmqvist <daae19@student.bth.se>
 
 CXX=g++-13
-CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -Ofast -mavx2
+CXXFLAGS=-std=c++17 -g -Wunused -Wall -Wunused -Ofast -march=native
 
 all: pearson_opt verify
 

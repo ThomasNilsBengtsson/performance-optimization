@@ -27,17 +27,17 @@ namespace Filter
         Matrix scratch{PPM::max_dimension};
         auto dst{m};
 
-        //Added these two for branch prediction
-        auto x_size = dst.get_x_size();
-        auto y_size = dst.get_y_size();
+        auto xSize = dst.get_x_size();
+        auto ySize = dst.get_y_size();
 
-        //Moved this block, so it is not in the for loop
+
+        // Moved this up
         double w[Gauss::max_radius]{};
         Gauss::get_weights(radius, w);
 
-        for (auto x{0}; x < x_size; x++)
+        for (auto x{0}; x < xSize; x++)
         {
-            for (auto y{0}; y < y_size; y++)
+            for (auto y{0}; y < ySize; y++)
             {
 
                 // unsigned char Matrix::r(unsigned x, unsigned y) const
@@ -51,7 +51,7 @@ namespace Filter
                 {
                     auto wc{w[wi]};
                     auto x2{x - wi};
-                    if (__builtin_expect(x2 >= 0, 1)) //Added branch prediction for each if statement
+                    if (__builtin_expect(x2 >= 0, 1))
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -59,7 +59,7 @@ namespace Filter
                         n += wc;
                     }
                     x2 = x + wi;
-                    if (__builtin_expect(x2 < x_size, 1))
+                    if (__builtin_expect(x2 < xSize, 1))
                     {
                         r += wc * dst.r(x2, y);
                         g += wc * dst.g(x2, y);
@@ -73,12 +73,11 @@ namespace Filter
             }
         }
 
-        for (auto x{0}; x < x_size; x++)
+        for (auto x{0}; x < xSize; x++)
         {
-            for (auto y{0}; y < y_size; y++)
+            for (auto y{0}; y < ySize; y++)
             {
-                /* 
-                Commented/removed this block because we already get the weight from above. (line 34, 35)
+                /* No need for this just takes time
                 double w[Gauss::max_radius]{};
                 Gauss::get_weights(radius, w);
                 */
@@ -97,7 +96,7 @@ namespace Filter
                         n += wc;
                     }
                     y2 = y + wi;
-                    if (__builtin_expect(y2 < y_size, 1))
+                    if (__builtin_expect(y2 < ySize, 1))
                     {
                         r += wc * scratch.r(x, y2);
                         g += wc * scratch.g(x, y2);
