@@ -8,34 +8,55 @@ Author: David Holmqvist <daae19@student.bth.se>
 #include <iostream>
 #include <vector>
 #include <pthread.h>
+#include <chrono>
+#include <atomic>
 
 namespace Analysis
 {
-    // Structure to pass data to each thread
     struct ThreadData {
         std::vector<Vector>* datasets;
         std::vector<double>* result;
-        size_t start_row;
-        size_t end_row;
+        std::atomic<size_t>* current_row;
         size_t n;
+        size_t chunk_size;
     };
 
-    // Thread function that computes correlations for assigned rows
     void* compute_correlations_thread(void* arg)
     {
         ThreadData* data = static_cast<ThreadData*>(arg);
         
-        for (size_t sample1 = data->start_row; sample1 < data->end_row; sample1++)
+        auto start = std::chrono::high_resolution_clock::now();
+        size_t pairs_computed = 0;
+        
+        while (true)
         {
-            size_t row_start = sample1 * data->n - (sample1 * (sample1 + 1)) / 2 - sample1;
+            // Grab a CHUNK of rows at once
+            size_t start_row = data->current_row->fetch_add(data->chunk_size);
             
-            for (size_t sample2 = sample1 + 1; sample2 < data->n; sample2++)
+            if (start_row >= data->n - 1)
+                break;
+            
+            size_t end_row = std::min(start_row + data->chunk_size, data->n - 1);
+            
+            // Process all rows in this chunk
+            for (size_t sample1 = start_row; sample1 < end_row; sample1++)
             {
-                size_t idx = row_start + sample2 - 1;
-                (*data->result)[idx] = pearson((*data->datasets)[sample1], 
-                                               (*data->datasets)[sample2]);
+                size_t row_start = sample1 * data->n - (sample1 * (sample1 + 1)) / 2 - sample1;
+                
+                for (size_t sample2 = sample1 + 1; sample2 < data->n; sample2++)
+                {
+                    size_t idx = row_start + sample2 - 1;
+                    (*data->result)[idx] = pearson((*data->datasets)[sample1], 
+                                                   (*data->datasets)[sample2]);
+                    pairs_computed++;
+                }
             }
         }
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        
+        std::cerr << "Thread computed " << pairs_computed << " pairs in " << duration << "ms" << std::endl;
         
         return nullptr;
     }
@@ -46,41 +67,31 @@ namespace Analysis
         size_t total_pairs = (n * (n - 1)) / 2;
         std::vector<double> result(total_pairs);
 
-        // Create threads
+        std::atomic<size_t> current_row(0);
+
         pthread_t* threads = new pthread_t[num_threads];
         ThreadData* thread_data = new ThreadData[num_threads];
 
-        // Calculate rows per thread (n-1 total rows to process)
-        size_t total_rows = n - 1;
-        size_t rows_per_thread = total_rows / num_threads;
-        size_t extra_rows = total_rows % num_threads;
+        // Chunk size: aim for ~20-50 chunks total
+        // For 1024 datasets: chunk_size = 1024 / (4 threads × 10) = ~25 rows per chunk
+        size_t chunk_size = std::max(size_t(1), (n - 1) / (num_threads * 10));
 
-        size_t current_row = 0;
-
-        // Launch threads
         for (int i = 0; i < num_threads; i++)
         {
             thread_data[i].datasets = &datasets;
             thread_data[i].result = &result;
-            thread_data[i].start_row = current_row;
+            thread_data[i].current_row = &current_row;
             thread_data[i].n = n;
-            
-            // Distribute extra rows to first threads
-            size_t rows_for_this_thread = rows_per_thread + (i < extra_rows ? 1 : 0);
-            thread_data[i].end_row = current_row + rows_for_this_thread;
-            
-            current_row = thread_data[i].end_row;
+            thread_data[i].chunk_size = chunk_size;
 
             pthread_create(&threads[i], nullptr, compute_correlations_thread, &thread_data[i]);
         }
 
-        // Wait for all threads to complete
         for (int i = 0; i < num_threads; i++)
         {
             pthread_join(threads[i], nullptr);
         }
 
-        // Clean up
         delete[] threads;
         delete[] thread_data;
 
