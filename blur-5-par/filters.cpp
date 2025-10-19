@@ -7,6 +7,22 @@ Author: David Holmqvist <daae19@student.bth.se>
 #include "ppm.hpp"
 #include <cmath>
 
+struct Data
+{
+    int start_row;
+    int end_row;
+    int y_size;
+    int x_size;
+    int radius;
+    double *weights;
+    unsigned char *dstR;
+    unsigned char *dstG;
+    unsigned char *dstB;
+    unsigned char *scratchR;
+    unsigned char *scratchG;
+    unsigned char *scratchB;
+};
+
 namespace Filter
 {
 
@@ -22,7 +38,7 @@ namespace Filter
         }
     }
 
-    Matrix blur(Matrix m, const int radius)
+    Matrix blur(Matrix m, const int radius, const int num_threads)
     {
         Matrix scratch{PPM::max_dimension};
         auto dst{m};
@@ -40,8 +56,73 @@ namespace Filter
         auto *scratchG = scratch.get_G();
         auto *scratchB = scratch.get_B();
 
-        #pragma omp parallel for schedule(dynamic)
-        for (auto y = 0; y < y_size; y++)
+        int rowsPerThread = y_size / num_threads;
+        pthread_t threads[num_threads];
+        Data threadData[num_threads];
+
+        for (int i = 0; i < num_threads; i++)
+        {
+            int startRow = i * rowsPerThread;
+            threadData[i].start_row = i * rowsPerThread;
+            threadData[i].end_row = (i == num_threads - 1) ? y_size : startRow + rowsPerThread;
+            threadData[i].x_size = x_size;
+            threadData[i].y_size = y_size;
+            threadData[i].radius = radius;
+            threadData[i].weights = w;
+            threadData[i].dstR = dstR;
+            threadData[i].dstG = dstG;
+            threadData[i].dstB = dstB;
+            threadData[i].scratchR = scratchR;
+            threadData[i].scratchG = scratchG;
+            threadData[i].scratchB = scratchB;
+            pthread_create(&threads[i], NULL, horizontalBlur, &threadData[i]);
+        }
+        for (int i = 0; i < num_threads; i++)
+        {
+            pthread_join(threads[i], NULL);
+        }
+        for (int i = 0; i < num_threads; i++)
+        {
+            int startRow = i * rowsPerThread;
+            threadData[i].start_row = i * rowsPerThread;
+            threadData[i].end_row = (i == num_threads - 1) ? y_size : startRow + rowsPerThread;
+            threadData[i].x_size = x_size;
+            threadData[i].y_size = y_size;
+            threadData[i].radius = radius;
+            threadData[i].weights = w;
+            threadData[i].dstR = dstR;
+            threadData[i].dstG = dstG;
+            threadData[i].dstB = dstB;
+            threadData[i].scratchR = scratchR;
+            threadData[i].scratchG = scratchG;
+            threadData[i].scratchB = scratchB;
+            pthread_create(&threads[i], NULL, verticalBlur, &threadData[i]);
+        }
+        for (int i = 0; i < num_threads; i++)
+        {
+            pthread_join(threads[i], NULL);
+        }
+
+        return dst;
+    }
+    void *horizontalBlur(void *arg)
+    {
+
+        Data *data = (Data *)arg;
+
+        int radius = data->radius;
+        int x_size = data->x_size;
+        int start_row = data->start_row;
+        int end_row = data->end_row;
+        double *w = data->weights;
+        unsigned char *dstR = data->dstR;
+        unsigned char *dstG = data->dstG;
+        unsigned char *dstB = data->dstB;
+        unsigned char *scratchR = data->scratchR;
+        unsigned char *scratchG = data->scratchG;
+        unsigned char *scratchB = data->scratchB;
+
+        for (auto y = start_row; y < end_row; y++)
         {
             for (auto x = 0; x < x_size; x++)
             {
@@ -84,11 +165,28 @@ namespace Filter
                 scratchB[idx] = b / n;
             }
         }
+        return NULL;
+    }
 
-        #pragma omp parallel for schedule(dynamic)
+    void *verticalBlur(void *arg)
+    {
+        Data *data = (Data *)arg;
+
+        int radius = data->radius;
+        int x_size = data->x_size;
+        int y_size = data->y_size;
+        int start_row = data->start_row;
+        int end_row = data->end_row;
+        double *w = data->weights;
+        unsigned char *dstR = data->dstR;
+        unsigned char *dstG = data->dstG;
+        unsigned char *dstB = data->dstB;
+        unsigned char *scratchR = data->scratchR;
+        unsigned char *scratchG = data->scratchG;
+        unsigned char *scratchB = data->scratchB;
         for (auto x = 0; x < x_size; x++)
         {
-            for (auto y = 0; y < y_size; y++)
+            for (auto y = start_row; y < end_row; y++)
             {
                 /* Den kallar get weights andra gången här vilket inte behövs
                 double w[Gauss::max_radius]{};
@@ -127,8 +225,6 @@ namespace Filter
                 dstB[idx] = b / n;
             }
         }
-
-        return dst;
+        return NULL;
     }
-
 }
